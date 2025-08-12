@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-
+// this is nav
 export default function() {
 const inactiveLink = 'flex gap-1 p-1 ';
 const activeLink = inactiveLink +'text-blue-900 bg-white rounded-l-lg';
