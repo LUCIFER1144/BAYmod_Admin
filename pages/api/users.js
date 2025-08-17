@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/mongodb';
+import { getDb } from '@/lib/db';
 
 export default async function handler(req, res) {
   try {
