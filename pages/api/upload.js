@@ -36,7 +36,7 @@ export default async function handle(req,res) {
             ContentType: mime.lookup(file.path),
             
         }));
-        const link = `https://<YOUR_CUSTOM_DOMAIN>/${newFilename}`;
+        const link = `https://baymod-admin.vercel.app/${newFilename}`;
         links.push(link);
     }
     
