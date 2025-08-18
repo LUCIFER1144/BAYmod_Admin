@@ -19,7 +19,12 @@
     "next": "^15.4.6",
     "next-auth": "^4.24.11",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-sortable": "^2.0.0",
+    "react-sortablejs": "^6.1.4",
+    "react-spinners": "^0.17.0",
+    "react-sweetalert2": "^0.6.0",
+    "sortablejs": "^1.15.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
