@@ -1,14 +1,22 @@
-const { Content } = require("next/font/google");
-
-/** @type {import { 'tailwindcss' }.Config}*/
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-    Content: [
-        "./app/**/*.{js,ts,jsx,tsx}",
-        "./page/**/*.{js,ts,jsx,tsx}",
-        "./components/**/*.{js,ts,jsx,tsx}",
-    ],
-    theme:{
-        extends: {},
+  // 1. 'Content' should be 'content' (lowercase 'c')
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx}", // Added pages folder, if you have it
+    "./components/**/*.{js,ts,jsx,tsx}",
+    // Make sure to include all directories where you use Tailwind classes
+  ],
+  theme: {
+    // 2. 'extends' should be 'extend'
+    extend: {
+      // 3. You need to define your 'colors' here
+      colors: {
+        primary: '#1E3A8A', // Define your custom 'primary' color (example hex code)
+        // You can add more custom colors here
+      },
     },
-    Plugin: [],
+  },
+  // 4. 'Plugin' should be 'plugins' (lowercase 'p')
+  plugins: [],
 }
