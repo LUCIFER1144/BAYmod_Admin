@@ -1,8 +1,10 @@
 import Layout from "@/components/Layout";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { withSwal } from 'react-sweetalert2';
 
-export default function Categories() {
+
+function Categories({swal}) {
     const [editedCategory, setEditedCategory] = useState(null);
     const [name, setName] = useState('');
     const [parentCategory, setParentCategory] = useState(''); // Stores ID of parent
@@ -64,11 +66,23 @@ export default function Categories() {
 
     // Function to delete a category (Placeholder, you'll implement the API call)
     async function deleteCategory(category) {
-        if (window.confirm(`Are you sure you want to delete "${category.name}"?`)) { // Use a modal instead of window.confirm in a real app
-             // Implement actual API call to delete category
-             // await axios.delete(`/api/categories?id=${category._id}`);
-             fetchCategories(); // Re-fetch categories after deletion
-        }
+        swal.fire({
+            title: "Are you sure?",
+            text: `Do you want to delete ${category.name}?`,
+            showCancelButton: true,
+            confirmButtonText: "Yes, Delete!",
+            cancelButtonText: "cancel",
+            confirmButtonColor: '#d55',
+            reverseButtons: true,
+
+        }).then(async result => {
+            if (result.isConfirmed) {
+                const {_id} = category;
+                await axios.delete('/api/categories?_id='+_id);
+                fetchCategories();
+            }
+        });
+        
     }
 
 
@@ -155,3 +169,7 @@ export default function Categories() {
         </Layout>
     );
 }
+
+export default withSwal(({swal, ref}) => (
+    <Categories swal={swal} />
+));

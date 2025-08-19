@@ -32,12 +32,9 @@ export default async function handle(req, res) {
     }
 
     if (method === 'DELETE') {
-        const { id } = req.query; // Assuming ID is passed as a query parameter (e.g., /api/categories?id=...)
-        if (id) {
-            await Category.deleteOne({ _id: id });
-            res.json(true);
-        } else {
-            res.status(400).json({ error: 'Category ID is required for deletion.' });
-        }
+        const {_id} = req.query; // Assuming ID is passed as a query parameter (e.g., /api/categories?id=...)
+        await Category.deleteOne({_id});
+        res.json('ok');
+        
     }
 }
