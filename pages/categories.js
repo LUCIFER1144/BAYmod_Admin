@@ -9,6 +9,7 @@ function Categories({swal}) {
     const [name, setName] = useState('');
     const [parentCategory, setParentCategory] = useState(''); // Stores ID of parent
     const [categories, setCategories] = useState([]);
+    const [properties, setProperties] = useState([]);
 
     // Fetch categories on component mount
     useEffect(() => {
@@ -31,7 +32,8 @@ function Categories({swal}) {
         ev.preventDefault();
         const data = { 
             name, 
-            parent: parentCategory === '' ? null : parentCategory 
+            parent: parentCategory === '' ? null : parentCategory,
+            properties
         };
 
         if (editedCategory) {
@@ -82,10 +84,33 @@ function Categories({swal}) {
                 fetchCategories();
             }
         });
-        
     }
-
-
+    function addProperty() {
+        setProperties(prev => {
+            return [...prev, {name:'', values:''}];
+        })
+    }
+    function handlePropertyNameChange(index, property, newName) {
+        setProperties(prev => {
+            const properties = [...prev];
+            properties[index].name = newName;
+            return properties;
+        })
+    }
+        function handlePropertyValuesChange(index, property, newValues) {
+        setProperties(prev => {
+            const properties = [...prev];
+            properties[index].values = newValues;
+            return properties;
+        })
+    }
+    function removeProperty(indexToRemove) {
+        setProperties(prev => {
+            return [...prev].filter((p, pIndex) => {
+                return pIndex !== indexToRemove;
+            });
+        });
+    }
     return (
         <Layout>
             <h1>Categories</h1>
@@ -95,17 +120,16 @@ function Categories({swal}) {
                     : 'Create new category'}
             </label>
             {/* The form needs a max-width and better alignment */}
-            <form onSubmit={saveCategory} className="flex gap-2 items-center mb-4"> {/* Increased gap, added mb-4 */}
-                <input 
+            <form onSubmit={saveCategory}>
+                <div className="flex gap-2">
+                    <input 
                     id="categoryName"
-                    className="mb-0 flex-grow max-w-xs" // Added max-w-xs to control input width
                     type="text"
                     placeholder={'Category name'} 
                     onChange={ev => setName(ev.target.value)}
                     value={name} 
                 />
                 <select 
-                    className="mb-0 max-w-xs" // Added max-w-xs to control select width
                     onChange={ev => setParentCategory(ev.target.value)}
                     value={parentCategory}>
                     <option value="">No parent category</option>
@@ -115,21 +139,59 @@ function Categories({swal}) {
                         </option>
                     ))}
                 </select>
+                </div>
+                <div className="mb-2">
+                    <label className="block">Properties</label>
+                    <button onClick={addProperty} type="button" 
+                    className="btn-default text-sm mb-2">Add new property</button>
+                    {properties.length > 0 && properties.map((property, index) => (
+                        <div className="flex gap-1 mb-2">
+                            <input type="text" 
+                            value={property.name}
+                            className="mb-0"
+                            onChange={ev => handlePropertyNameChange(index, property, ev.target.value)} 
+                            placeholder="property name (example: color)"/>
+                            <input type="text" 
+                            value={property.values}
+                            className="mb-0"
+                            onChange={ev => handlePropertyValuesChange(index, property, ev.target.value)}
+                            placeholder="values, comma separated"/>
+
+                            <button onClick={() => removeProperty(index)}
+                                type="button"
+                                className="btn-default">
+                                Remove
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                <div className="flex gap-1">
+                {editedCategory &&  (
+                    <button onClick={() => {setEditedCategory(null);
+                        setName('');
+                        setParentCategory('');
+                    }}
+                        type="button"
+                        className="btn-default">
+                        Cancel
+                    </button>
+                )}
                 <button 
                     type="submit" 
                     className="btn-primary py-1 px-4 whitespace-nowrap"> {/* Explicit px-4 */}
                     Save
                 </button>
-                {editedCategory && (
+                </div>
+            </form>
+                {/* {editedCategory && (
                     <button 
                         type="button" 
                         onClick={cancelEdit} 
                         className="btn-default py-1 px-4 whitespace-nowrap">
                         Cancel
                     </button>
-                )}
-            </form>
-
+                )} */}
+            {!editedCategory && (
             <table className="basic mt-4"> 
                 <thead>
                     <tr>
@@ -166,6 +228,7 @@ function Categories({swal}) {
                     ))}
                 </tbody>
             </table>
+            )}
         </Layout>
     );
 }
