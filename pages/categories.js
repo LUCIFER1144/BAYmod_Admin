@@ -1,27 +1,75 @@
+// pages/categories.js
 import Layout from "@/components/Layout";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { withSwal } from 'react-sweetalert2';
 
+// Import necessary modules for server-side session and data fetching
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Ensure this path is correct
 
-function Categories({swal}) {
+// CORRECTED: Directly import the Category model, not the getCategoryModel function
+import { mongooseConnect } from "@/lib/mongoose"; 
+import { Category } from "@/models/Category"; // <-- CRUCIAL CHANGE HERE
+
+// --- getServerSideProps for server-side access control and data fetching ---
+// This function runs exclusively on the server-side for every request to this page.
+export async function getServerSideProps(context) {
+    // 1. Server-side session check for admin access
+    const session = await getServerSession(context.req, context.res, authOptions);
+
+    // If there's no session (user is not logged in) OR the logged-in user is NOT an admin,
+    // redirect them to the /access-denied page.
+    if (!session || !session.user.isAdmin) {
+        return {
+            redirect: {
+                destination: '/access-denied', // Redirect to the custom access denied page
+                permanent: false, // Not a permanent redirect (status 302)
+            },
+        };
+    }
+    
+    // 2. Establish Mongoose connection BEFORE attempting to use models
+    await mongooseConnect(); // Ensure Mongoose connection is established
+
+    // CORRECTED: Use the directly imported 'Category' model. No need for getCategoryModel() anymore.
+    const categories = await Category.find().populate('parent'); 
+
+    return {
+        props: {
+            // Pass the session to the Layout component
+            session: JSON.parse(JSON.stringify(session)), 
+            // Pass the fetched categories data as props to the component.
+            initialCategories: JSON.parse(JSON.stringify(categories)), 
+        },
+    };
+}
+// --- End getServerSideProps ---
+
+
+// --- Your existing Categories page component ---
+// The 'initialCategories' and 'session' props are now available directly from getServerSideProps
+function Categories({swal, session, initialCategories}) { // <-- Ensure 'session' is accepted here
+    // Initialize categories state with data from getServerSideProps
+    const [categories, setCategories] = useState(initialCategories || []); 
+
     const [editedCategory, setEditedCategory] = useState(null);
     const [name, setName] = useState('');
     const [parentCategory, setParentCategory] = useState(''); // Stores ID of parent
-    const [categories, setCategories] = useState([]);
     const [properties, setProperties] = useState([]);
 
-    // Fetch categories on component mount
     useEffect(() => {
-        fetchCategories();
+        // This useEffect will now only run on client-side and re-fetch after initial server render.
+        // It's useful if data might change without a full page navigation (e.g., from other admin users)
+        // or if you want fresh data after a form submission on the same page.
+        fetchCategories(); 
     }, []);
 
-    // Function to fetch all categories from the API
+    // Function to fetch all categories from the API (for client-side updates after mutations)
     function fetchCategories() {
         axios.get('/api/categories').then(result => {
             setCategories(result.data);
-            // If we're not editing, clear the parent category selection
-            if (!editedCategory) { // Changed this logic slightly
+            if (!editedCategory) { 
                 setParentCategory('');
             }
         });
@@ -33,30 +81,34 @@ function Categories({swal}) {
         const data = { 
             name, 
             parent: parentCategory === '' ? null : parentCategory,
-            properties
+            properties:properties.map(p => ({
+                name:p.name,
+                values:p.values.split(',').map(s => s.trim()), 
+            })),
         };
 
         if (editedCategory) {
-            // If editing, send PUT request with existing category ID
             data._id = editedCategory._id;
             await axios.put('/api/categories', data);
-            setEditedCategory(null); // Clear edited category state
+            setEditedCategory(null);
         } else {
-            // If creating new, send POST request
             await axios.post('/api/categories', data);
         }
-
-        setName(''); // Clear name input
-        setParentCategory(''); // Clear parent selection
-        fetchCategories(); // Re-fetch categories to update UI
+        setName(''); 
+        setParentCategory('');
+        setProperties([]);
+        fetchCategories(); 
     }
 
     // Sets the state to allow editing of a specific category
     function editCategory(category) {
         setEditedCategory(category);
         setName(category.name);
-        // Ensure parentCategory is set correctly from the object or ID
-        setParentCategory(category.parent?._id || category.parent || ''); 
+        setParentCategory(category.parent?._id || category.parent || '');
+        setProperties(category.properties.map(({name,values}) =>({
+            name,
+            values:values.join(',')
+        }))); 
     }
 
     // Function to cancel editing
@@ -64,32 +116,34 @@ function Categories({swal}) {
         setEditedCategory(null);
         setName('');
         setParentCategory('');
+        setProperties([]); 
     }
 
-    // Function to delete a category (Placeholder, you'll implement the API call)
+    // Function to delete a category using sweetalert2 for confirmation
     async function deleteCategory(category) {
         swal.fire({
             title: "Are you sure?",
             text: `Do you want to delete ${category.name}?`,
             showCancelButton: true,
             confirmButtonText: "Yes, Delete!",
-            cancelButtonText: "cancel",
+            cancelButtonText: "Cancel",
             confirmButtonColor: '#d55',
             reverseButtons: true,
-
         }).then(async result => {
             if (result.isConfirmed) {
                 const {_id} = category;
                 await axios.delete('/api/categories?_id='+_id);
-                fetchCategories();
+                fetchCategories(); 
             }
         });
     }
+
     function addProperty() {
         setProperties(prev => {
             return [...prev, {name:'', values:''}];
         })
     }
+
     function handlePropertyNameChange(index, property, newName) {
         setProperties(prev => {
             const properties = [...prev];
@@ -97,13 +151,15 @@ function Categories({swal}) {
             return properties;
         })
     }
-        function handlePropertyValuesChange(index, property, newValues) {
+
+    function handlePropertyValuesChange(index, property, newValues) {
         setProperties(prev => {
             const properties = [...prev];
             properties[index].values = newValues;
             return properties;
         })
     }
+
     function removeProperty(indexToRemove) {
         setProperties(prev => {
             return [...prev].filter((p, pIndex) => {
@@ -111,15 +167,15 @@ function Categories({swal}) {
             });
         });
     }
+
     return (
-        <Layout>
+        <Layout session={session}> {/* Pass session to Layout */}
             <h1>Categories</h1>
-            <label htmlFor="categoryName" className="text-gray-600 text-sm"> {/* Re-added text-sm here, was in global but sometimes useful to be explicit */}
+            <label htmlFor="categoryName" className="text-gray-600 text-sm">
                 {editedCategory 
                     ? `Edit category ${editedCategory.name}` 
                     : 'Create new category'}
             </label>
-            {/* The form needs a max-width and better alignment */}
             <form onSubmit={saveCategory}>
                 <div className="flex gap-2">
                     <input 
@@ -128,24 +184,25 @@ function Categories({swal}) {
                     placeholder={'Category name'} 
                     onChange={ev => setName(ev.target.value)}
                     value={name} 
-                />
-                <select 
-                    onChange={ev => setParentCategory(ev.target.value)}
-                    value={parentCategory}>
-                    <option value="">No parent category</option>
-                    {categories.length > 0 && categories.map(category => (
-                        <option key={category._id} value={category._id}>
-                            {category.name}
-                        </option>
-                    ))}
-                </select>
+                    />
+                    <select 
+                        onChange={ev => setParentCategory(ev.target.value)}
+                        value={parentCategory}>
+                        <option value="">No parent category</option>
+                        {categories.length > 0 && categories.map(category => (
+                            <option key={category._id} value={category._id}>
+                                {category.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
+
                 <div className="mb-2">
                     <label className="block">Properties</label>
                     <button onClick={addProperty} type="button" 
                     className="btn-default text-sm mb-2">Add new property</button>
                     {properties.length > 0 && properties.map((property, index) => (
-                        <div className="flex gap-1 mb-2">
+                        <div key={index} className="flex gap-1 mb-2"> 
                             <input type="text" 
                             value={property.name}
                             className="mb-0"
@@ -165,12 +222,10 @@ function Categories({swal}) {
                         </div>
                     ))}
                 </div>
+
                 <div className="flex gap-1">
-                {editedCategory &&  (
-                    <button onClick={() => {setEditedCategory(null);
-                        setName('');
-                        setParentCategory('');
-                    }}
+                {editedCategory && (
+                    <button onClick={cancelEdit} 
                         type="button"
                         className="btn-default">
                         Cancel
@@ -178,56 +233,52 @@ function Categories({swal}) {
                 )}
                 <button 
                     type="submit" 
-                    className="btn-primary py-1 px-4 whitespace-nowrap"> {/* Explicit px-4 */}
+                    className="btn-primary py-1 px-4 whitespace-nowrap">
                     Save
                 </button>
                 </div>
             </form>
-                {/* {editedCategory && (
-                    <button 
-                        type="button" 
-                        onClick={cancelEdit} 
-                        className="btn-default py-1 px-4 whitespace-nowrap">
-                        Cancel
-                    </button>
-                )} */}
+            
             {!editedCategory && (
-            <table className="basic mt-4"> 
-                <thead>
-                    <tr>
-                        {/* Removed uppercase as per screenshot, added font-bold */}
-                        <td className="font-bold">Category name</td> 
-                        <td className="font-bold">Parent category</td> 
-                        <td></td> {/* For action buttons */}
-                    </tr>
-                </thead>
-                <tbody>
-                    {categories.length > 0 && categories.map(category => (
-                        <tr key={category._id}>
-                            <td>{category.name}</td>
-                            <td>
-                                {/* This logic finds the parent category name from the fetched categories array.
-                                   It handles both populated parent objects and just the parent ID. */}
-                                {category.parent 
-                                    ? (categories.find(p => p._id === (category.parent._id || category.parent))?.name || '')
-                                    : ''}
-                            </td>
-                            <td className="flex gap-1 justify-end"> {/* Used justify-end to push buttons to the right */}
-                                <button 
-                                    onClick={() => editCategory(category)} 
-                                    className="btn-default py-1 px-2 text-sm">
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => deleteCategory(category)} // Added onClick for delete
-                                    className="btn-red py-1 px-2 text-sm">
-                                    Delete
-                                </button>
-                            </td>
+                <table className="basic mt-4"> 
+                    <thead>
+                        <tr>
+                            <td className="font-bold">Category name</td> 
+                            <td className="font-bold">Parent category</td> 
+                            <td></td>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {categories.length === 0 ? (
+                            <tr>
+                                <td colSpan="3" className="text-center py-4 text-gray-500">No categories found.</td>
+                            </tr>
+                        ) : (
+                            categories.map(category => (
+                                <tr key={category._id}>
+                                    <td>{category.name}</td>
+                                    <td>
+                                        {category.parent 
+                                            ? (categories.find(p => p._id === (category.parent._id || category.parent))?.name || '')
+                                            : ''}
+                                    </td>
+                                    <td className="flex gap-1 justify-end">
+                                        <button 
+                                            onClick={() => editCategory(category)} 
+                                            className="btn-default py-1 px-2 text-sm">
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => deleteCategory(category)} 
+                                            className="btn-red py-1 px-2 text-sm">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             )}
         </Layout>
     );
