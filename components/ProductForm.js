@@ -149,8 +149,8 @@ export default function ProductForm({
             
             {/* Render properties if there are any to fill */}
             {propertiesToFill.length > 0 && propertiesToFill.map(p => (
-                <div key={p.name} className="flex gap-1 items-center"> {/* Added key and items-center */}
-                    <div>{p.name}:</div> {/* Added colon for better readability */}
+                <div key={p.name} className=""> {/* Added key and items-center */}
+                    <label>{p.name}:</label> {/* Added colon for better readability */}
                     <select 
                         value={productProperties[p.name] || ''} // Ensure value is empty string if undefined for controlled component
                         onChange={ev => setProductProp(p.name,ev.target.value)}>
@@ -172,7 +172,7 @@ export default function ProductForm({
                     className="flex flex-wrap gap-1"
                     setList={updateImagesOrder}>
                     {!!images?.length && images.map(link =>(
-                        <div key={link} className="h-24">
+                        <div key={link} className="h-24 bg-white p-4 shadow-sm rounded-sm border border-gray-200">
                             <img src={link} alt="" className="rounded-lg"/>
                         </div>
                     ))}
@@ -183,12 +183,12 @@ export default function ProductForm({
                     </div>
                 )}
                 <label className="w-24 h-24 cursor-pointer text-center flex flex-col
-                items-center justify-center text-sm gap-1 text-gray-500 rounded-lg bg-gray-200"> {/* Corrected 'tsext-gray-500' */}
+                items-center justify-center text-sm gap-1 text-gray-500 rounded-sm bg-gray-200"> {/* Corrected 'tsext-gray-500' */}
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                     </svg>
                     <div>
-                        Upload
+                        Upload img
                     </div>
                     <input type="file" onChange={uploadImages} className="hidden"/>
                     
@@ -217,8 +217,7 @@ export default function ProductForm({
 
             <button
                 type="submit"
-                className="btn-primary"
-            >
+                className="btn-primary">
                 Save
             </button>
         </form>

@@ -13,7 +13,8 @@ module.exports = {
       // 3. You need to define your 'colors' here
       colors: {
         primary: '#1E3A8A', // Define your custom 'primary' color (example hex code)
-        // You can add more custom colors here
+        highlight: '#eae8fb',
+        bgGray: 'fbfafd',
       },
     },
   },
