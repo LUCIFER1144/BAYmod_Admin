@@ -46,7 +46,6 @@ export async function getServerSideProps(context) {
 }
 // --- End getServerSideProps ---
 
-
 // --- Your existing Categories page component ---
 // The 'initialCategories' and 'session' props are now available directly from getServerSideProps
 function Categories({swal, session, initialCategories}) { // <-- Ensure 'session' is accepted here
@@ -216,7 +215,7 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
 
                             <button onClick={() => removeProperty(index)}
                                 type="button"
-                                className="btn-default">
+                                className="btn-red">
                                 Remove
                             </button>
                         </div>
@@ -227,7 +226,7 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                 {editedCategory && (
                     <button onClick={cancelEdit} 
                         type="button"
-                        className="btn-default">
+                        className="btn-red">
                         Cancel
                     </button>
                 )}
@@ -283,7 +282,6 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
         </Layout>
     );
 }
-
 export default withSwal(({swal, ref}) => (
     <Categories swal={swal} />
 ));
