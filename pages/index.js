@@ -2,6 +2,7 @@
 import Layout from "@/components/Layout";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { useSession } from "next-auth/react";
 
 export async function getServerSideProps(context) {
     const session = await getServerSession(context.req, context.res, authOptions);
@@ -34,7 +35,8 @@ export async function getServerSideProps(context) {
     };
 }
 
-export default function Dashboard({ session }) {
+export default function Dashboard() {
+    const {data: session} = useSession();
     return (
         <Layout>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
