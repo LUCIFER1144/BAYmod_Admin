@@ -61,50 +61,52 @@ function OrdersPage() {
             <div className="flex justify-between">
                 <h2>Orders</h2>
             </div>
-            <table className="basic mt-4">
-                <thead>
-                    <tr>
-                        <td>Date</td>
-                        <td>Paid</td>
-                        <td>Recipient</td>
-                        <td>Products</td>
-                        <td>Actions</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    {orders.length > 0 &&
-                    orders.map((order) => (
-                        <tr key={order._id}>
-                            <td>{new Date(order.createdAt).toLocaleString()}</td>
-                            <td className={order.paid ? "text-green-600" : "text-red-600"}>
-                                {order.paid ? "YES" : "NO"}
-                            </td>
-                            <td>
-                                {order.name} {order.email}
-                                <br />
-                                {order.city} {order.postalCode} {order.country}
-                                <br />
-                                {order.streetAddress}
-                            </td>
-                            <td>
-                                {order.line_items.map((l) => (
-                                    <div key={l._id}>
-                                        {l.price_data?.product_data.name} x{l.quantity}
-                                    </div>
-                                ))}
-                            </td>
-                            <td>
-                                <button
-                                    onClick={() => handleDeleteClick(order)}
-                                    className="btn-red"
-                                >
-                                    Delete
-                                </button>
-                            </td>
+            <div className="overflow-x-auto mt-4 bg-white rounded-lg shadow">
+                <table className="basic mt-4">
+                    <thead>
+                        <tr>
+                            <td>Date</td>
+                            <td>Paid</td>
+                            <td>Recipient</td>
+                            <td>Products</td>
+                            <td>Actions</td>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {orders.length > 0 &&
+                        orders.map((order) => (
+                            <tr key={order._id}>
+                                <td>{new Date(order.createdAt).toLocaleString()}</td>
+                                <td className={order.paid ? "text-green-600" : "text-red-600"}>
+                                    {order.paid ? "YES" : "NO"}
+                                </td>
+                                <td>
+                                    {order.name} {order.email}
+                                    <br />
+                                    {order.city} {order.postalCode} {order.country}
+                                    <br />
+                                    {order.streetAddress}
+                                </td>
+                                <td>
+                                    {order.line_items.map((l) => (
+                                        <div key={l._id}>
+                                            {l.price_data?.product_data.name} x{l.quantity}
+                                        </div>
+                                    ))}
+                                </td>
+                                <td>
+                                    <button
+                                        onClick={() => handleDeleteClick(order)}
+                                        className="btn-red"
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">

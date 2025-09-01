@@ -56,3 +56,4 @@ button { cursor:pointer; }
 .log-out-Btn {
         cursor: pointer;
     }
+html, body { overflow-x: hidden; }

@@ -10,7 +10,7 @@ export default function Nav({show, onClose}) {
     const inactiveIcon = 'w-6 h-6';
     const activeIcon = inactiveIcon + ' text-primary';
     const inactiveLink = 'flex gap-1 items-center'; 
-    const activeLink = inactiveLink + ' text-black bg-gradient-to-r from-blue-500 to-purple-200 rounded-md';
+    const activeLink = inactiveLink + ' text-black bg-gradient-to-r from-blue-500 to-purple-300 rounded-md';
     
     async function logout() {
         await router.push('/'); // Redirect client-side to login (which is '/')
@@ -23,14 +23,19 @@ export default function Nav({show, onClose}) {
     }
 
     return (
-        <aside className={
-            (show ? 'left-0' : '-left-full') +
-            // Apply the gradient and white text only on mobile (small) screens
-            " bg-gradient-to-r from-indigo-500 to-blue-500 text-black" +
-            // Apply the solid background color and black text for medium screens and up
-            " md:bg-none md:bg-[#fbfafd] md:text-black" +
-            " top-0 p-4 fixed md:static w-screen md:w-auto h-screen md:h-auto transition-all z-50"
-        }>
+        <aside
+            className={[
+                // Mobile: overlay that slides in/out via transform (no w-screen!)
+                "fixed left-0 top-0 h-screen w-full transition-transform duration-300 z-50",
+                show ? "translate-x-0" : "-translate-x-full",
+
+                // Mobile background
+                "bg-gradient-to-r from-indigo-500 to-blue-500 text-black",
+
+                // Desktop: reset to static sidebar, visible always, solid bg
+                "md:static md:translate-x-0 md:h-auto md:w-64 md:bg-none md:bg-[#fbfafd] md:text-black"
+            ].join(" ")}
+        >
             <button onClick={onClose} className="absolute top-4 right-4 md:hidden text-gray-600 z-50">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
