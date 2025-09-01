@@ -10,6 +10,12 @@ module.exports = {
   theme: {
     // 2. 'extends' should be 'extend'
     extend: {
+      screens: {
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+      },
       // 3. You need to define your 'colors' here
       colors: {
         primary: '#1E3A8A', // Define your custom 'primary' color (example hex code)
