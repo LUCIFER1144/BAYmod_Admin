@@ -58,75 +58,122 @@ function OrdersPage() {
 
     return (
         <Layout>
-            <div className="flex justify-between">
-                <h2>Orders</h2>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Orders</h2>
             </div>
-            <div className="overflow-x-auto mt-4 bg-white rounded-lg shadow">
-                <table className="basic mt-4">
-                    <thead>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto bg-white rounded-lg shadow-md">
+                <table className="w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
                         <tr>
-                            <td>Date</td>
-                            <td>Paid</td>
-                            <td>Recipient</td>
-                            <td>Products</td>
-                            <td>Actions</td>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {orders.length > 0 &&
-                        orders.map((order) => (
-                            <tr key={order._id}>
-                                <td>{new Date(order.createdAt).toLocaleString()}</td>
-                                <td className={order.paid ? "text-green-600" : "text-red-600"}>
-                                    {order.paid ? "YES" : "NO"}
-                                </td>
-                                <td>
-                                    {order.name} {order.email}
-                                    <br />
-                                    {order.city} {order.postalCode} {order.country}
-                                    <br />
-                                    {order.streetAddress}
-                                </td>
-                                <td>
-                                    {order.line_items.map((l) => (
-                                        <div key={l._id}>
-                                            {l.price_data?.product_data.name} x{l.quantity}
-                                        </div>
-                                    ))}
-                                </td>
-                                <td>
-                                    <button
-                                        onClick={() => handleDeleteClick(order)}
-                                        className="btn-red"
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {orders.length > 0 ? (
+                            orders.map((order) => (
+                                <tr key={order._id}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(order.createdAt).toLocaleString()}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${order.paid ? "text-green-600" : "text-red-600"}`}>{order.paid ? "YES" : "NO"}</td>
+                                    <td className="px-6 py-4 whitespace-pre-wrap text-sm text-gray-900">
+                                        {order.name} <span className="block text-gray-500">{order.email}</span>
+                                        <span className="block text-gray-500">{order.city} {order.postalCode} {order.country}</span>
+                                        <span className="block text-gray-500">{order.streetAddress}</span>
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        {order.line_items.map((l, index) => (
+                                            <div key={index} className="flex items-center">
+                                                <span className="block">{l.price_data?.product_data.name}</span>
+                                                <span className="block ml-1 font-bold">x{l.quantity}</span>
+                                            </div>
+                                        ))}
+                                    </td>
+                                    <td className="px-5 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onClick={() => handleDeleteClick(order)} className="text-red-600 hover:text-red-900 font-bold">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No orders found.</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+                {orders.length > 0 ? (
+                    orders.map((order) => (
+                        <div key={order._id} className="bg-white rounded-lg shadow p-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-gray-500">Order ID:</span>
+                                <span className="text-sm font-semibold truncate ml-2">{order._id}</span>
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                                <span className="text-sm font-medium text-gray-500">Date:</span>
+                                <span className="text-sm">{new Date(order.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                                <span className="text-sm font-medium text-gray-500">Paid:</span>
+                                <span className={`text-sm font-semibold ${order.paid ? "text-green-600" : "text-red-600"}`}>{order.paid ? "YES" : "NO"}</span>
+                            </div>
+                            <div className="mt-4">
+                                <h4 className="font-semibold text-gray-700">Recipient</h4>
+                                <p className="text-sm text-gray-600 mt-1">{order.name}</p>
+                                <p className="text-sm text-gray-600">{order.email}</p>
+                                <p className="text-sm text-gray-600">{order.streetAddress}, {order.city}, {order.country}</p>
+                            </div>
+                            <div className="mt-4">
+                                <h4 className="font-semibold text-gray-700">Products</h4>
+                                {order.line_items.map((l, index) => (
+                                    <div key={index} className="text-sm text-gray-600 mt-1">
+                                        {l.price_data?.product_data.name} x{l.quantity}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-4 text-right">
+                                <button
+                                    onClick={() => handleDeleteClick(order)}
+                                    className="px-4 py-2 bg-red-500 text-white font-semibold rounded-md hover:bg-red-600"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="bg-white rounded-lg shadow p-4 text-center text-gray-500">
+                        No orders found.
+                    </div>
+                )}
+            </div>
+
             {showDeleteModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-md shadow-lg">
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white p-6 rounded-md shadow-lg max-w-sm w-full">
                         <h3 className="text-lg font-bold">Confirm Deletion</h3>
-                        <p className="mt-2">
+                        <p className="mt-2 text-sm text-gray-600">
                             Are you sure you want to delete the order from
-                            <span className="font-semibold"> {orderToDelete.name}</span>? This action
-                            cannot be undone.
+                            <span className="font-semibold"> {orderToDelete.name}</span>? This action cannot be undone.
                         </p>
                         <div className="mt-4 flex justify-end gap-2">
                             <button
                                 onClick={cancelDelete}
-                                className="px-4 py-2 border rounded-md"
+                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDelete}
-                                className="px-4 py-2 bg-red-500 text-white rounded-md"
+                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
                             >
                                 Delete
                             </button>
@@ -138,7 +185,7 @@ function OrdersPage() {
     );
 }
 
-// Retain getServerSideProps to handle initial auth and data fetching on page load
+// Retain getServerSideProps to handle initial auth check
 export async function getServerSideProps(context) {
     const session = await getSession(context);
 
@@ -150,13 +197,10 @@ export async function getServerSideProps(context) {
             },
         };
     }
-  // Data will be fetched client-side with useEffect, so we no longer need to pass it as props
+
     await mongooseConnect();
     return {
-        props: {
-      // We don't need to pass the orders here anymore
-      // This is a minimal change to keep the authorization check
-        },
+        props: {},
     };
 }
 

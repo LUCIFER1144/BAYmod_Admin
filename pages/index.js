@@ -3,6 +3,10 @@ import Layout from "@/components/Layout";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { useSession } from "next-auth/react";
+import { mongooseConnect } from "@/lib/mongoose";
+import { Product } from "@/models/Product";
+import { Order } from "@/models/Order";
+import { Category } from "@/models/Category";
 
 export async function getServerSideProps(context) {
     const session = await getServerSession(context.req, context.res, authOptions);
@@ -28,14 +32,21 @@ export async function getServerSideProps(context) {
     }
 
     // Case 3: Logged in AND an admin - proceed to show dashboard
+    await mongooseConnect();
+    const productsCount = await Product.countDocuments();
+    const ordersCount = await Order.countDocuments();
+    const categoriesCount = await Category.countDocuments();
     return {
         props: {
             session: JSON.parse(JSON.stringify(session)), // Pass serialized session to component
+            productsCount,
+            ordersCount,
+            categoriesCount,
         },
     };
 }
 
-export default function Dashboard() {
+export default function Dashboard({ productsCount, ordersCount, categoriesCount }) {
     const {data: session} = useSession();
     return (
         <Layout>
@@ -50,15 +61,15 @@ export default function Dashboard() {
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white p-6 rounded-lg shadow-lg">
                     <h3 className="text-xl font-semibold mb-2">Total Products</h3>
-                    <p className="text-3xl">120</p>
+                    <p className="text-3xl">{productsCount}</p>
                 </div>
                 <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-6 rounded-lg shadow-lg">
-                    <h3 className="text-xl font-semibold mb-2">Pending Orders</h3>
-                    <p className="text-3xl">5</p>
+                    <h3 className="text-xl font-semibold mb-2">Orders</h3>
+                    <p className="text-3xl">{ordersCount}</p>
                 </div>
                 <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-6 rounded-lg shadow-lg">
                     <h3 className="text-xl font-semibold mb-2">Categories</h3>
-                    <p className="text-3xl">15</p>
+                    <p className="text-3xl">{categoriesCount}</p>
                 </div>
             </div>
         </Layout>
