@@ -1,48 +1,54 @@
 import { mongooseConnect } from "@/lib/mongoose";
-import { getSession } from "next-auth/react";
 import { Setting } from "@/models/Setting";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./auth/[...nextauth]";
 
 export default async function handler(req, res) {
-    const session = await getSession({ req });
-    if (!session || !session.user.isAdmin) {
-        return res.status(401).json({ error: "Unauthorized access" });
+  // Get the session on the server side using your auth options.
+  const session = await getServerSession(req, res, authOptions);
+
+  // Check for both session and admin status in a single conditional.
+  if (!session || !session.user?.isAdmin) {
+    return res.status(401).json({ message: "Unauthorized: Not an admin" });
+  }
+
+  await mongooseConnect();
+  const userId = session.user.id;
+
+  try {
+    if (req.method === "PUT") {
+      const { language, theme } = req.body;
+
+      // Handle language setting
+      if (language) {
+        await Setting.findOneAndUpdate(
+          { userId, name: "language" },
+          { value: language },
+          { upsert: true, new: true }
+        );
+      }
+
+      // Handle theme setting
+      if (theme) {
+        await Setting.findOneAndUpdate(
+          { userId, name: "theme" },
+          { value: theme },
+          { upsert: true, new: true }
+        );
+      }
+
+      return res.json({ success: true });
     }
 
-    await mongooseConnect();
-    const userId = session.user.id;
-
-    switch (req.method) {
-        case "GET":
-            try {
-                const settings = await Setting.findOne({ userId });
-                if (!settings) {
-                    // Create default settings if none exist
-                    const newSettings = await Setting.create({ userId, language: 'en', theme: 'light' });
-                    return res.json(newSettings);
-                }
-                res.json(settings);
-            } catch (error) {
-                console.error("Error fetching settings:", error);
-                res.status(500).json({ error: "Failed to fetch settings" });
-            }
-            break;
-
-        case "PUT":
-            const { language, theme } = req.body;
-            try {
-                const settings = await Setting.findOneAndUpdate(
-                    { userId },
-                    { language, theme },
-                    { new: true, upsert: true } // Upsert: create if not found, update if found
-                );
-                res.status(200).json({ success: true, settings });
-            } catch (error) {
-                console.error("Error updating settings:", error);
-                res.status(500).json({ error: "Failed to update settings" });
-            }
-            break;
-
-        default:
-            res.status(405).json({ error: "Method not allowed" });
+    if (req.method === "GET") {
+      const settings = await Setting.find({ userId });
+      return res.json(settings);
     }
+  } catch (error) {
+    console.error("Error saving/fetching settings:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+
+  res.setHeader("Allow", ["GET", "PUT"]);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 }
