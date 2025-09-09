@@ -2,7 +2,7 @@
 import '@/styles/globals.css';
 import { TranslationProvider } from "@/lib/Translation";
 import { SessionProvider } from 'next-auth/react'; // Ensure this import is correct
-
+import { SpeedInsights } from '@vercel/speed-insights/next';
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   // Ensure that the 'session' from pageProps (which comes from getServerSideProps)
   // is correctly passed to the SessionProvider.
@@ -11,6 +11,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
     <SessionProvider session={session}>
       <TranslationProvider initialLanguage={initialLanguage}>
         <Component {...pageProps} />
+        <SpeedInsights />
       </TranslationProvider>
     </SessionProvider>
   );
