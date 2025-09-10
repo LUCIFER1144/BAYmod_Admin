@@ -1,21 +1,20 @@
-// pages/_app.js
 import '@/styles/globals.css';
 import { TranslationProvider } from "@/lib/Translation";
-import { SessionProvider } from 'next-auth/react'; // Ensure this import is correct
+import { SessionProvider } from 'next-auth/react'; 
 import { Analytics } from '@vercel/analytics/next';
+import { mongooseConnect } from "@/lib/mongoose";
 
-function MyApp({ Component, pageProps: { session, ...pageProps } }) {
-  // Ensure that the 'session' from pageProps (which comes from getServerSideProps)
-  // is correctly passed to the SessionProvider.
-  const initialLanguage = pageProps.initialLanguage || 'en';
+function MyApp({ Component, pageProps }) {
+  const { session, initialLanguage, ...restPageProps } = pageProps;
+
   return (
     <SessionProvider session={session}>
       <TranslationProvider initialLanguage={initialLanguage}>
-        <Component {...pageProps} />
+        <Component {...restPageProps} />
         <Analytics />
       </TranslationProvider>
     </SessionProvider>
   );
 }
 
-export default MyApp; // Use the function name in export default
+export default MyApp;
