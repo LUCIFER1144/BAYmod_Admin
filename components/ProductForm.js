@@ -26,18 +26,15 @@ export default function ProductForm({
     const router = useRouter();
 
     useEffect(() => {
-        // Fetch categories when the component mounts
-        // Ensure your /api/categories endpoint populates the 'properties' field
+        // fetch categories when the component mounts
+        
         // and optionally the 'parent' field to get properties from parent categories.
         axios.get('/api/categories').then(result => {
             setCategories(result.data);
         })
     }, []);
 
-    /*
-     * Handles the form submit for creating a new product.
-     * @param {React.FormEvent<HTMLFormElement>} ev - The form submission event.
-     */
+    
     async function saveProduct(ev) {
         ev.preventDefault();
 
@@ -46,28 +43,28 @@ export default function ProductForm({
             description, 
             price,
             images,
-            // If category is an empty string (Uncategorized), send null
+            // if category is an empty string (Uncategorized), send null
             category: category === '' ? null : category,
             properties: productProperties
         };
 
         if (_id) {
-            // Update existing product
+            // update existing product
             await axios.put('/api/products', {...data, _id})
         }
         else{
-            // Create new product
+            // create new product
             await axios.post('/api/products', data);
         }
-        setGoToProducts(true); // Redirect to products page after save
+        setGoToProducts(true); // redirect to products after save
     }
 
-    // Redirect logic
+    // redirect to products
     if (goToProducts){
         router.push('/products');
     }
 
-    // Handles image uploads
+    // handles image uploads
     async function uploadImages(ev) {
         const files =ev.target?.files;
         if (files?.length > 0) {
@@ -85,12 +82,12 @@ export default function ProductForm({
         }
     }
 
-    // Updates image order for ReactSortable
+    // updates image order for ReactSortable
     function updateImagesOrder(images) {
         setImages(images);
     }
 
-    // Handles setting product properties
+    // handles setting product properties
     function setProductProp(propName,value) {
         setProductProperties(prev =>{
             const newProductProps = {...prev};
@@ -100,25 +97,25 @@ export default function ProductForm({
     }
 
     const propertiesToFill = [];
-    // Only proceed if a category is selected AND categories data has been loaded
+    // only proceed if a category is selected AND categories data has been loaded
     if (category && categories.length > 0) {
-        // Find the selected category's info
+        // find the selected category's info
         let catInfo = categories.find(c => c._id === category);
 
-        // Crucial: Check if catInfo was actually found AND if it has properties
+        // check if catInfo was actually found AND if it has properties
         if (catInfo && catInfo.properties) {
             propertiesToFill.push(...catInfo.properties); // Add properties from the current category
 
-            // Traverse parent categories to inherit properties
+            // traverse parent categories to inherit properties
             while(catInfo?.parent?._id) {
-                // Find the parent category
+                // find the parent category
                 const parentCat = categories.find(c => c._id === catInfo.parent._id);
-                // Crucial: Check if parentCat was found AND if it has properties
+                //check if parentCat was found AND if it has properties
                 if (parentCat && parentCat.properties) {
                     propertiesToFill.push(...parentCat.properties); // Add properties from parent
                 }
                 catInfo = parentCat; // Move up to the parent for the next iteration
-                // Add a safety break to prevent infinite loops in case of malformed data (e.g., circular parent references)
+                // add a safety break to prevent infinite loops in case of malformed data (e.g., circular parent references)
                 if (!catInfo) break; 
             }
         }
@@ -131,9 +128,6 @@ export default function ProductForm({
                 type="text"
                 placeholder="Product name"
                 value={title}
-                /**
-                 * @param {React.ChangeEvent<HTMLInputElement>} ev
-                 */
                 onChange={ev => setTitle(ev.target.value)}
             />
             <label>Category</label>
@@ -149,12 +143,12 @@ export default function ProductForm({
             
             {/* Render properties if there are any to fill */}
             {propertiesToFill.length > 0 && propertiesToFill.map(p => (
-                <div key={p.name} className=""> {/* Added key and items-center */}
-                    <label>{p.name}:</label> {/* Added colon for better readability */}
+                <div key={p.name} className=""> 
+                    <label>{p.name}:</label> 
                     <select 
-                        value={productProperties[p.name] || ''} // Ensure value is empty string if undefined for controlled component
+                        value={productProperties[p.name] || ''} 
                         onChange={ev => setProductProp(p.name,ev.target.value)}>
-                        <option value="">Select a value</option> {/* Default option for properties */}
+                        <option value="">Select a value</option> 
                         {p.values.map(v => (
                             <option key={v} value={v}>{v}</option> 
                         ))}
@@ -198,9 +192,7 @@ export default function ProductForm({
             <textarea
                 placeholder="Description"
                 value={description}
-                /**
-                 * @param {React.ChangeEvent<HTMLTextAreaElement>} ev
-                 */
+                
                 onChange={ev => setDescription(ev.target.value)}
             />
 
@@ -209,9 +201,7 @@ export default function ProductForm({
                 type="number"
                 placeholder="Price"
                 value={price}
-                /**
-                 * @param {React.ChangeEvent<HTMLInputElement>} ev
-                 */
+                
                 onChange={ev => setPrice(ev.target.value)}
             />
 
