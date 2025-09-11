@@ -1,4 +1,3 @@
-import Layout from "@/components/Layout";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { useSession } from "next-auth/react";
@@ -6,7 +5,7 @@ import { mongooseConnect } from "@/lib/mongoose";
 import { Product } from "@/models/Product";
 import { Order } from "@/models/Order";
 import { Category } from "@/models/Category";
-import { Setting } from "@/models/Setting"; // Import the Setting model
+import { Setting } from "@/models/Setting"; 
 import { useTranslation } from "@/lib/Translation";
 
 export async function getServerSideProps(context) {
@@ -32,7 +31,7 @@ export async function getServerSideProps(context) {
 
     await mongooseConnect();
     
-    // Fetch the user's language setting
+    
     const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
     const initialLanguage = languageSetting?.value || 'en';
 
@@ -43,7 +42,7 @@ export async function getServerSideProps(context) {
     return {
         props: {
             session: JSON.parse(JSON.stringify(session)),
-            initialLanguage, // Pass the fetched language to the component
+            initialLanguage, 
             productsCount,
             ordersCount,
             categoriesCount,
@@ -56,7 +55,7 @@ export default function Dashboard({ initialLanguage, productsCount, ordersCount,
     const {t} = useTranslation();
     
     return (
-        <Layout initialLanguage={initialLanguage}>
+        <>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">{t.adminDashboard}</h1>
             <div className="flex justify-between items-center bg-blue-100 p-4 rounded-lg shadow-sm">
                 <h2 className="text-xl font-semibold text-blue-800">{t.hello} {session?.user?.name || 'Admin'}</h2>
@@ -79,6 +78,6 @@ export default function Dashboard({ initialLanguage, productsCount, ordersCount,
                     <p className="text-3xl">{categoriesCount}</p>
                 </div>
             </div>
-        </Layout>
+        </>
     );
 }

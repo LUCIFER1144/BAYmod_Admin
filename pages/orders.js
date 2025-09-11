@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import Layout from "@/components/Layout";
 import { getSession } from "next-auth/react";
 import { mongooseConnect } from "@/lib/mongoose";
 import { Setting } from "@/models/Setting";
 import { useTranslation } from "@/lib/Translation";
 
-function OrdersPage({initialLanguage}) {
+function OrdersPage() {
     const [orders, setOrders] = useState([]);
     const {t} = useTranslation();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -60,7 +59,7 @@ function OrdersPage({initialLanguage}) {
     }
 
     return (
-        <Layout initialLanguage={initialLanguage}>
+        <>
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">{t.Orders}</h2>
             </div>
@@ -184,11 +183,11 @@ function OrdersPage({initialLanguage}) {
                     </div>
                 </div>
             )}
-        </Layout>
+        </>
     );
 }
 
-// Retain getServerSideProps to handle initial auth check
+
 export async function getServerSideProps(context) {
     const session = await getSession(context);
 

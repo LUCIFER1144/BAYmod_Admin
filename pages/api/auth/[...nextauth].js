@@ -32,9 +32,7 @@ export const authOptions = {
     updateAge: 24 * 60 * 60,
   },
 
-  // This is the crucial part to fix your issue.
-  // We define a custom session token cookie name for the admin site
-  // to prevent it from conflicting with the main client site's session.
+
   cookies: {
     sessionToken: {
       name: `next-auth.admin-session-token`,

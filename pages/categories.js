@@ -1,40 +1,34 @@
 // pages/categories.js
-import Layout from "@/components/Layout";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { withSwal } from 'react-sweetalert2';
-
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Ensure this path is correct
-
-// CORRECTED: Directly import the Category model, not the getCategoryModel function
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { mongooseConnect } from "@/lib/mongoose"; 
-import { Category } from "@/models/Category"; // <-- CRUCIAL CHANGE HERE
+import { Category } from "@/models/Category"; 
 import { useTranslation } from "@/lib/Translation";
 import { Setting } from "@/models/Setting";
 
-// --- getServerSideProps for server-side access control and data fetching ---
-// This function runs exclusively on the server-side for every request to this page.
+
 export async function getServerSideProps(context) {
-    // 1. Server-side session check for admin access
+    
     const session = await getServerSession(context.req, context.res, authOptions);
 
-    // If there's no session (user is not logged in) OR the logged-in user is NOT an admin,
-    // redirect them to the /access-denied page.
+
     if (!session || !session.user.isAdmin) {
         return {
             redirect: {
-                destination: '/access-denied', // Redirect to the custom access denied page
-                permanent: false, // Not a permanent redirect (status 302)
+                destination: '/access-denied', 
+                permanent: false, 
             },
         };
     }
     
-    // 2. Establish Mongoose connection BEFORE attempting to use models
-    await mongooseConnect(); // Ensure Mongoose connection is established
+
+    await mongooseConnect();
     const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
     const initialLanguage = languageSetting?.value || 'en';
-    // CORRECTED: Use the directly imported 'Category' model. No need for getCategoryModel() anymore.
+
     const categories = await Category.find().populate('parent'); 
 
     return {
@@ -47,23 +41,20 @@ export async function getServerSideProps(context) {
         },
     };
 }
-// --- End getServerSideProps ---
 
-// --- Your existing Categories page component ---
-// The 'initialCategories' and 'session' props are now available directly from getServerSideProps
-function Categories({swal, session, initialCategories, initialLanguage}) { // <-- Ensure 'session' is accepted here
+function Categories({swal, session, initialCategories}) { 
     // Initialize categories state with data from getServerSideProps
     const [categories, setCategories] = useState(initialCategories || []); 
     const {t} = useTranslation();
     const [editedCategory, setEditedCategory] = useState(null);
     const [name, setName] = useState('');
-    const [parentCategory, setParentCategory] = useState(''); // Stores ID of parent
+    const [parentCategory, setParentCategory] = useState(''); 
     const [properties, setProperties] = useState([]);
 
     useEffect(() => {
         // This useEffect will now only run on client-side and re-fetch after initial server render.
-        // It's useful if data might change without a full page navigation (e.g., from other admin users)
-        // or if you want fresh data after a form submission on the same page.
+        
+        // or for fresh data after a form submission on the same page.
         fetchCategories(); 
     }, []);
 
@@ -171,7 +162,7 @@ function Categories({swal, session, initialCategories, initialLanguage}) { // <-
     }
 
     return (
-        <Layout session={session} initialLanguage={initialLanguage}> {/* Pass session to Layout */}
+        <> {/* Pass session to Layout */}
             <h1>{t.Categories}</h1>
             <label htmlFor="categoryName" className="text-gray-600 text-sm">
                 {editedCategory 
@@ -282,7 +273,7 @@ function Categories({swal, session, initialCategories, initialLanguage}) { // <-
                     </tbody>
                 </table>
             )}
-        </Layout>
+        </>
     );
 }
 export default withSwal(({swal, ref}) => (

@@ -1,5 +1,5 @@
 // pages/admin.js
-import Layout from "@/components/Layout";
+
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -96,18 +96,18 @@ export default function AdminPage({initialLanguage}) {
     }
 
     async function deleteUser(userId, userEmail) {
-        // Confirmation before deletion
+        
         if (window.confirm(`Are you sure you want to delete the user "${userEmail}"? This action cannot be undone.`)) {
-            // Prevent deleting the currently logged-in admin
+            
             if (session.user.id === userId) {
                 setError("You cannot delete your own user account while logged in.");
                 return;
             }
 
             try {
-                // Call the DELETE API endpoint with the user's ID
+                
                 await axios.delete(`/api/admin/users?id=${userId}`);
-                fetchUsers(); // Re-fetch users to update the list
+                fetchUsers();
             } catch (err) {
                 console.error("Failed to delete user:", err);
                 setError(err.response?.data?.message || "Failed to delete user. Please try again.");
@@ -117,26 +117,26 @@ export default function AdminPage({initialLanguage}) {
 
     if (status === 'loading' || loading) {
         return (
-            <Layout initialLanguage={initialLanguage}>
+            <>
                 <div className="flex justify-center items-center min-h-screen">
                     <Spinner />
                 </div>
-            </Layout>
+            </>
         );
     }
 
     if (!session || !session.user.isAdmin) {
         return (
-            <Layout initialLanguage={initialLanguage}>
+            <>
                 <div className="text-center text-red-500 mt-8">
                     {error || "Access Denied: You must be an administrator to view this page."}
                 </div>
-            </Layout>
+            </>
         );
     }
 
     return (
-        <Layout initialLanguage={initialLanguage}>
+        <>
             <h1>{t.ManageAdminAccounts}</h1>
 
             {error && (
@@ -197,6 +197,6 @@ export default function AdminPage({initialLanguage}) {
                     )}
                 </tbody>
             </table>
-        </Layout>
+        </>
     );
 }
