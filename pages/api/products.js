@@ -1,20 +1,20 @@
 // pages/api/products.js
 import { mongooseConnect } from "@/lib/mongoose";
-import { Product } from "@/models/Product"; // Make sure your Product model is imported
-import { isAdminRequest } from "@/pages/api/auth/[...nextauth]"; // Import the admin check function
+import { Product } from "@/models/Product"; 
+import { isAdminRequest } from "@/pages/api/auth/[...nextauth]"; 
 
 export default async function handle(req, res) {
     const { method } = req;
-    await mongooseConnect(); // Ensure database connection
+    await mongooseConnect(); 
 
-    // --- CRITICAL PROTECTION: Only admins can access this API route ---
+
     try {
         await isAdminRequest(req, res); // This function will throw an error and end the response if not an admin
     } catch (e) {
         // If isAdminRequest throws, it already handled sending the 401/403 response
         return; 
     }
-    // --- End Protection ---
+    
 
     if (method === 'GET') {
         if (req.query?.id) {

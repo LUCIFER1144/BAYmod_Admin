@@ -1,50 +1,41 @@
 // pages/products/delete/[...id].js
-import Layout from "@/components/Layout";
 import { useRouter } from "next/router";
-import axios from "axios"; // Keep axios for the DELETE API call
-
-// Removed useEffect and useState as product data is fetched server-side
-// import { useEffect, useState } from "react"; 
-
-// Import necessary modules for server-side session and data fetching
+import axios from "axios"; 
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Ensure this path is correct
-import { mongooseConnect } from "@/lib/mongoose"; // Ensure this path is correct for your Mongoose connection
-import { Product } from "@/models/Product"; // Ensure this path is correct for your Product model
+import { authOptions } from "@/pages/api/auth/[...nextauth]"; 
+import { mongooseConnect } from "@/lib/mongoose"; 
+import { Product } from "@/models/Product"; 
+import { useTranslation } from "@/lib/Translation";
+import { Setting } from "@/models/Setting";
 
-// --- getServerSideProps for server-side access control and data fetching ---
-// This function runs exclusively on the server-side for every request to this page.
+
 export async function getServerSideProps(context) {
     // 1. Server-side session check for admin access
     const session = await getServerSession(context.req, context.res, authOptions);
 
-    // If there's no session (user is not logged in) OR the logged-in user is NOT an admin,
-    // redirect them to the /access-denied page.
+    
     if (!session || !session.user.isAdmin) {
         return {
             redirect: {
-                destination: '/access-denied', // Redirect to the custom access denied page
-                permanent: false, // Not a permanent redirect (status 302)
+                destination: '/access-denied', 
+                permanent: false, 
             },
         };
     }
 
-    // 2. Fetch the product ID from the URL context (e.g., /products/delete/123 -> id is '123')
+    // 2. Fetch the product ID from the URL context 
     const { id } = context.query;
 
     // 3. Fetch the product data from the database (only if user is an admin)
-    await mongooseConnect(); // Ensure Mongoose connection is established
+    await mongooseConnect(); 
     const product = await Product.findById(id); // Fetch the product using its ID
-
-    // If the product with the given ID is not found, you might want to redirect or show a 404 page.
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
+    
     if (!product) {
         return {
-            notFound: true, // This will render Next.js's default 404 page
-            // Alternatively, you could redirect:
-            // redirect: {
-            //     destination: '/products', // Redirect back to the products list
-            //     permanent: false,
-            // },
+            notFound: true, 
+            
         };
     }
 
@@ -52,17 +43,17 @@ export async function getServerSideProps(context) {
         props: {
             // Pass the product's title and ID as props to the component for the confirmation message.
             // Mongoose documents need to be serialized.
-            productTitle: product.title, 
+            productTitle: product.title,
+            initialLanguage, 
             productId: JSON.parse(JSON.stringify(product._id)), // Ensure ID is a plain string
         },
     };
 }
-// --- End getServerSideProps ---
 
-// --- Your Delete Product Page component ---
-// The 'productTitle' and 'productId' props are now available directly from getServerSideProps
-export default function DeleteProductPage({ productTitle, productId }) {
+
+export default function DeleteProductPage({ productTitle, productId ,initialLanguage }) {
     const router = useRouter();
+    const {t} = useTranslation();
 
     // Function to navigate back to the products list
     function goBack() {
@@ -77,20 +68,20 @@ export default function DeleteProductPage({ productTitle, productId }) {
     }
 
     return (
-        <Layout>
-            <h1 className="text-center">Do you really want to delete
+        <>
+            <h1 className="text-center">{t.ConfirmDeletion}
                 &nbsp;&quot;{productTitle}&quot;?
             </h1>
             <div className="flex gap-2 justify-center">
                 <button
                     onClick={deleteProduct}
-                    className="btn-red">Yes</button>
+                    className="btn-red">{t.Yes}</button>
                 <button
                     className="btn-default"
                     onClick={goBack}>
-                    No
+                    {t.No}
                 </button>
             </div>
-        </Layout>
+        </>
     );
 }

@@ -1,15 +1,13 @@
+// components/Layout.js
 import Nav from "@/components/Nav";
 import { useSession, signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation, TranslationProvider } from "@/lib/Translation";
-import { Setting } from "@/models/Setting";
-import { mongooseConnect } from "@/lib/mongoose";
 
 function Layout({ children, initialLanguage }) {
-  const { data: session } = useSession();
   const [showNav, setShowNav] = useState(false);
 
-  // Use the provider to make translations available to children
+  
   return (
     <TranslationProvider initialLanguage={initialLanguage}>
       <InnerLayout showNav={showNav} setShowNav={setShowNav}>
@@ -22,6 +20,7 @@ function Layout({ children, initialLanguage }) {
 function InnerLayout({ children, showNav, setShowNav }) {
   const { data: session } = useSession();
   const { language } = useTranslation();
+  const isArabic = language === "ar";
 
   if (!session) {
     return (
@@ -39,8 +38,16 @@ function InnerLayout({ children, showNav, setShowNav }) {
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="md:hidden flex items-center p-4">
+    <div
+      className="bg-gray-100 min-h-screen"
+      dir={isArabic ? "rtl" : "ltr"} 
+    >
+      {/* Mobile top bar with hamburger */}
+      <div
+        className={`md:hidden flex items-center p-4 ${
+          isArabic ? "justify-end" : "justify-start"
+        }`}
+      >
         <button onClick={() => setShowNav(true)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -58,40 +65,18 @@ function InnerLayout({ children, showNav, setShowNav }) {
           </svg>
         </button>
       </div>
-      <div className="flex">
-        <Nav show={showNav} onClose={() => setShowNav(false)} />
-        <div
-          className={`flex-grow p-4 min-h-screen text-black transition-all duration-300 ${
-            language === "ar" ? "text-right" : "text-left"
-          }`}
-        >
-          {children}
-        </div>
+
+      {/* Sidebar + main content */}
+      <div className={`flex gap-4 ${isArabic ? "flex-row-reverse" : "flex-row"}`}>
+        <Nav
+          show={showNav}
+          onClose={() => setShowNav(false)}
+          language={language}
+        />
+        <div className="flex-1 p-4">{children}</div>
       </div>
     </div>
   );
-}
-
-export async function getServerSideProps(context) {
-    const session = await getSession(context);
-
-    if (!session) {
-        return {
-            props: {
-                initialLanguage: 'en',
-            },
-        };
-    }
-
-    await mongooseConnect();
-    const userSettings = await Setting.findOne({ userId: session.user.id });
-    const initialLanguage = userSettings?.language || 'en';
-
-    return {
-        props: {
-            initialLanguage,
-        },
-    };
 }
 
 export default Layout;

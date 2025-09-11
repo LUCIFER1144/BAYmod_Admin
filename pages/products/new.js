@@ -1,10 +1,12 @@
 // pages/products/new.js
-import Layout from "@/components/Layout";
-import ProductForm from "@/components/ProductForm";
-import { getServerSession } from "next-auth"; // For server-side session check
-import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Import authOptions
 
-// --- getServerSideProps for server-side access control ---
+import ProductForm from "@/components/ProductForm";
+import { getServerSession } from "next-auth"; 
+import { authOptions } from "@/pages/api/auth/[...nextauth]"; 
+import { Setting } from "@/models/Setting";
+import { useTranslation } from "@/lib/Translation";
+
+
 export async function getServerSideProps(context) {
     const session = await getServerSession(context.req, context.res, authOptions);
 
@@ -16,17 +18,22 @@ export async function getServerSideProps(context) {
             },
         };
     }
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
     return {
-        props: {}, // No specific data needed for a new product form
+        props: {
+            initialLanguage,
+        }, 
     };
 }
-// --- End getServerSideProps ---
 
-export default function NewProduct() {
+
+export default function NewProduct({initialLanguage}) {
+    const {t} = useTranslation();
     return (
-        <Layout>
-            <h1>New Product</h1>
+        <>
+            <h1>{t.NewProduct}</h1> 
             <ProductForm />
-        </Layout>
+        </>
     );
 }

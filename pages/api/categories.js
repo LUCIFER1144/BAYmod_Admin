@@ -1,20 +1,20 @@
 // pages/api/categories.js
 import { mongooseConnect } from "@/lib/mongoose";
-import { Category } from "@/models/Category"; // Make sure your Category model is imported
-import { isAdminRequest } from "@/pages/api/auth/[...nextauth]"; // Import the admin check function
+import { Category } from "@/models/Category"; 
+import { isAdminRequest } from "@/pages/api/auth/[...nextauth]"; 
 
 export default async function handle(req, res) {
     const { method } = req;
     await mongooseConnect(); // Ensure database connection
 
-    // --- CRITICAL PROTECTION: Only admins can access this API route ---
+    
     try {
         await isAdminRequest(req, res); // This function will throw an error and end the response if not an admin
     } catch (e) {
-        // If isAdminRequest throws, it already handled sending the 401/403 response
+
         return; 
     }
-    // --- End Protection ---
+    
 
     if (method === 'GET') {
         if (req.query?.id) {
@@ -47,7 +47,7 @@ export default async function handle(req, res) {
     }
 
     if (method === 'DELETE') {
-        if (req.query?._id) { // Your client code uses _id as query param
+        if (req.query?._id) { // the client code uses _id as query param
             await Category.deleteOne({_id:req.query._id});
             res.json(true);
         }

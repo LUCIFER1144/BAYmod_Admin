@@ -1,37 +1,34 @@
 // pages/categories.js
-import Layout from "@/components/Layout";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { withSwal } from 'react-sweetalert2';
-
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Ensure this path is correct
-
-// CORRECTED: Directly import the Category model, not the getCategoryModel function
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { mongooseConnect } from "@/lib/mongoose"; 
-import { Category } from "@/models/Category"; // <-- CRUCIAL CHANGE HERE
+import { Category } from "@/models/Category"; 
+import { useTranslation } from "@/lib/Translation";
+import { Setting } from "@/models/Setting";
 
-// --- getServerSideProps for server-side access control and data fetching ---
-// This function runs exclusively on the server-side for every request to this page.
+
 export async function getServerSideProps(context) {
-    // 1. Server-side session check for admin access
+    
     const session = await getServerSession(context.req, context.res, authOptions);
 
-    // If there's no session (user is not logged in) OR the logged-in user is NOT an admin,
-    // redirect them to the /access-denied page.
+
     if (!session || !session.user.isAdmin) {
         return {
             redirect: {
-                destination: '/access-denied', // Redirect to the custom access denied page
-                permanent: false, // Not a permanent redirect (status 302)
+                destination: '/access-denied', 
+                permanent: false, 
             },
         };
     }
     
-    // 2. Establish Mongoose connection BEFORE attempting to use models
-    await mongooseConnect(); // Ensure Mongoose connection is established
 
-    // CORRECTED: Use the directly imported 'Category' model. No need for getCategoryModel() anymore.
+    await mongooseConnect();
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
+
     const categories = await Category.find().populate('parent'); 
 
     return {
@@ -40,26 +37,24 @@ export async function getServerSideProps(context) {
             session: JSON.parse(JSON.stringify(session)), 
             // Pass the fetched categories data as props to the component.
             initialCategories: JSON.parse(JSON.stringify(categories)), 
+            initialLanguage,
         },
     };
 }
-// --- End getServerSideProps ---
 
-// --- Your existing Categories page component ---
-// The 'initialCategories' and 'session' props are now available directly from getServerSideProps
-function Categories({swal, session, initialCategories}) { // <-- Ensure 'session' is accepted here
+function Categories({swal, session, initialCategories}) { 
     // Initialize categories state with data from getServerSideProps
     const [categories, setCategories] = useState(initialCategories || []); 
-
+    const {t} = useTranslation();
     const [editedCategory, setEditedCategory] = useState(null);
     const [name, setName] = useState('');
-    const [parentCategory, setParentCategory] = useState(''); // Stores ID of parent
+    const [parentCategory, setParentCategory] = useState(''); 
     const [properties, setProperties] = useState([]);
 
     useEffect(() => {
         // This useEffect will now only run on client-side and re-fetch after initial server render.
-        // It's useful if data might change without a full page navigation (e.g., from other admin users)
-        // or if you want fresh data after a form submission on the same page.
+        
+        // or for fresh data after a form submission on the same page.
         fetchCategories(); 
     }, []);
 
@@ -167,8 +162,8 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
     }
 
     return (
-        <Layout session={session}> {/* Pass session to Layout */}
-            <h1>Categories</h1>
+        <> {/* Pass session to Layout */}
+            <h1>{t.Categories}</h1>
             <label htmlFor="categoryName" className="text-gray-600 text-sm">
                 {editedCategory 
                     ? `Edit category ${editedCategory.name}` 
@@ -179,14 +174,14 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                     <input 
                     id="categoryName"
                     type="text"
-                    placeholder={'Category name'} 
+                    placeholder={t.CategoryName} 
                     onChange={ev => setName(ev.target.value)}
                     value={name} 
                     />
                     <select 
                         onChange={ev => setParentCategory(ev.target.value)}
                         value={parentCategory}>
-                        <option value="">No parent category</option>
+                        <option value="">{t.NoParentCategory}</option>
                         {categories.length > 0 && categories.map(category => (
                             <option key={category._id} value={category._id}>
                                 {category.name}
@@ -196,9 +191,9 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                 </div>
 
                 <div className="mb-2">
-                    <label className="block">Properties</label>
+                    <label className="block">{t.Properties}</label>
                     <button onClick={addProperty} type="button" 
-                    className="btn-default text-sm mb-2">Add new property</button>
+                    className="btn-default text-sm mb-2">{t.AddNewProperty}</button>
                     {properties.length > 0 && properties.map((property, index) => (
                         <div key={index} className="flex gap-1 mb-2"> 
                             <input type="text" 
@@ -215,7 +210,7 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                             <button onClick={() => removeProperty(index)}
                                 type="button"
                                 className="btn-red">
-                                Remove
+                                {t.Remove}
                             </button>
                         </div>
                     ))}
@@ -226,13 +221,13 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                     <button onClick={cancelEdit} 
                         type="button"
                         className="btn-red">
-                        Cancel
+                        {t.Cancel}
                     </button>
                 )}
                 <button 
                     type="submit" 
                     className="btn-primary py-1 px-4 whitespace-nowrap">
-                    Save
+                    {t.Save}
                 </button>
                 </div>
             </form>
@@ -241,15 +236,15 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                 <table className="basic mt-4"> 
                     <thead>
                         <tr>
-                            <td className="font-bold">Category name</td> 
-                            <td className="font-bold">Parent category</td> 
+                            <td className="font-bold">{t.CategoryName}</td> 
+                            <td className="font-bold">{t.ParentCategory}</td> 
                             <td></td>
                         </tr>
                     </thead>
                     <tbody>
                         {categories.length === 0 ? (
                             <tr>
-                                <td colSpan="3" className="text-center py-4 text-gray-500">No categories found.</td>
+                                <td colSpan="3" className="text-center py-4 text-gray-500">{t.NoCategoriesFound}</td>
                             </tr>
                         ) : (
                             categories.map(category => (
@@ -264,12 +259,12 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                                         <button 
                                             onClick={() => editCategory(category)} 
                                             className="btn-default py-1 px-2 text-sm">
-                                            Edit
+                                            {t.Edit}
                                         </button>
                                         <button
                                             onClick={() => deleteCategory(category)} 
                                             className="btn-red py-1 px-2 text-sm">
-                                            Delete
+                                            {t.Delete}
                                         </button>
                                     </td>
                                 </tr>
@@ -278,7 +273,7 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                     </tbody>
                 </table>
             )}
-        </Layout>
+        </>
     );
 }
 export default withSwal(({swal, ref}) => (

@@ -26,7 +26,7 @@ export default async function handle(req, res) {
     }
 
     if (method === 'DELETE') {
-        const { id } = req.query; // Expecting the user ID to be passed as a query parameter (e.g., /api/admin/users?id=...)
+        const { id } = req.query; // Expecting the user ID to be passed as a query parameter
         if (!id) {
             return res.status(400).json({ message: "User ID is required for deletion." });
         }
