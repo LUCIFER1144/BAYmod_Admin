@@ -24,7 +24,7 @@ export default function Nav({ show, onClose, language }) {
     await signOut("google");
     }
 
-  // Navigation links 
+    // Navigation links 
     const navItems = [
         {
             href: "/",

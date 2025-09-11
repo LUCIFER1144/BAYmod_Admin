@@ -66,7 +66,7 @@ function InnerLayout({ children, showNav, setShowNav }) {
         </button>
       </div>
 
-      {/* Sidebar + main content */}
+      {/* sidebar and main content */}
       <div className={`flex gap-4 ${isArabic ? "flex-row-reverse" : "flex-row"}`}>
         <Nav
           show={showNav}
