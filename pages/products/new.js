@@ -3,6 +3,8 @@ import Layout from "@/components/Layout";
 import ProductForm from "@/components/ProductForm";
 import { getServerSession } from "next-auth"; // For server-side session check
 import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Import authOptions
+import { Setting } from "@/models/Setting";
+import { useTranslation } from "@/lib/Translation";
 
 // --- getServerSideProps for server-side access control ---
 export async function getServerSideProps(context) {
@@ -16,16 +18,21 @@ export async function getServerSideProps(context) {
             },
         };
     }
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
     return {
-        props: {}, // No specific data needed for a new product form
+        props: {
+            initialLanguage,
+        }, // No specific data needed for a new product form
     };
 }
 // --- End getServerSideProps ---
 
-export default function NewProduct() {
+export default function NewProduct({initialLanguage}) {
+    const {t} = useTranslation();
     return (
-        <Layout>
-            <h1>New Product</h1>
+        <Layout initialLanguage={initialLanguage}>
+            <h1>{t.NewProduct}</h1> 
             <ProductForm />
         </Layout>
     );

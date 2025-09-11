@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { getSession } from "next-auth/react";
 import { mongooseConnect } from "@/lib/mongoose";
+import { Setting } from "@/models/Setting";
+import { useTranslation } from "@/lib/Translation";
 
-function OrdersPage() {
+function OrdersPage({initialLanguage}) {
     const [orders, setOrders] = useState([]);
+    const {t} = useTranslation();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [orderToDelete, setOrderToDelete] = useState(null);
 
@@ -57,20 +60,20 @@ function OrdersPage() {
     }
 
     return (
-        <Layout>
+        <Layout initialLanguage={initialLanguage}>
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Orders</h2>
+                <h2 className="text-2xl font-bold">{t.Orders}</h2>
             </div>
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto bg-white rounded-lg shadow-md">
                 <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.Date}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.Paid}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.Recipient}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.Products}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.Actions}</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -94,14 +97,14 @@ function OrdersPage() {
                                     </td>
                                     <td className="px-5 py-3 whitespace-nowrap text-right text-sm font-medium">
                                         <button onClick={() => handleDeleteClick(order)} className="text-red-600 hover:text-red-900 font-bold">
-                                            Delete
+                                            {t.Delete}
                                         </button>
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No orders found.</td>
+                                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">{t.NoOrdersFound}</td>
                             </tr>
                         )}
                     </tbody>
@@ -114,25 +117,25 @@ function OrdersPage() {
                     orders.map((order) => (
                         <div key={order._id} className="bg-white rounded-lg shadow p-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-500">Order ID:</span>
+                                <span className="text-sm font-medium text-gray-500">{t.OrderID}</span>
                                 <span className="text-sm font-semibold truncate ml-2">{order._id}</span>
                             </div>
                             <div className="flex items-center justify-between mt-2">
-                                <span className="text-sm font-medium text-gray-500">Date:</span>
+                                <span className="text-sm font-medium text-gray-500">{t.Date}</span>
                                 <span className="text-sm">{new Date(order.createdAt).toLocaleDateString()}</span>
                             </div>
                             <div className="flex items-center justify-between mt-2">
-                                <span className="text-sm font-medium text-gray-500">Paid:</span>
+                                <span className="text-sm font-medium text-gray-500">{t.Paid}</span>
                                 <span className={`text-sm font-semibold ${order.paid ? "text-green-600" : "text-red-600"}`}>{order.paid ? "YES" : "NO"}</span>
                             </div>
                             <div className="mt-4">
-                                <h4 className="font-semibold text-gray-700">Recipient</h4>
+                                <h4 className="font-semibold text-gray-700">{t.Recipient}</h4>
                                 <p className="text-sm text-gray-600 mt-1">{order.name}</p>
                                 <p className="text-sm text-gray-600">{order.email}</p>
                                 <p className="text-sm text-gray-600">{order.streetAddress}, {order.city}, {order.country}</p>
                             </div>
                             <div className="mt-4">
-                                <h4 className="font-semibold text-gray-700">Products</h4>
+                                <h4 className="font-semibold text-gray-700">{t.Products}</h4>
                                 {order.line_items.map((l, index) => (
                                     <div key={index} className="text-sm text-gray-600 mt-1">
                                         {l.price_data?.product_data.name} x{l.quantity}
@@ -144,14 +147,14 @@ function OrdersPage() {
                                     onClick={() => handleDeleteClick(order)}
                                     className="px-4 py-2 bg-red-500 text-white font-semibold rounded-md hover:bg-red-600"
                                 >
-                                    Delete
+                                    {t.Delete}
                                 </button>
                             </div>
                         </div>
                     ))
                 ) : (
                     <div className="bg-white rounded-lg shadow p-4 text-center text-gray-500">
-                        No orders found.
+                        {t.NoOrdersFound}
                     </div>
                 )}
             </div>
@@ -159,23 +162,23 @@ function OrdersPage() {
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white p-6 rounded-md shadow-lg max-w-sm w-full">
-                        <h3 className="text-lg font-bold">Confirm Deletion</h3>
+                        <h3 className="text-lg font-bold">{t.ConfirmOrderDeletion}</h3>
                         <p className="mt-2 text-sm text-gray-600">
-                            Are you sure you want to delete the order from
+                            
                             <span className="font-semibold"> {orderToDelete.name}</span>? This action cannot be undone.
-                        </p>
+                        </p>{t.AreYouSureDeleteOrder}
                         <div className="mt-4 flex justify-end gap-2">
                             <button
                                 onClick={cancelDelete}
                                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
                             >
-                                Cancel
+                                {t.Cancel}
                             </button>
                             <button
                                 onClick={confirmDelete}
                                 className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
                             >
-                                Delete
+                                {t.Delete}
                             </button>
                         </div>
                     </div>
@@ -199,8 +202,12 @@ export async function getServerSideProps(context) {
     }
 
     await mongooseConnect();
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
     return {
-        props: {},
+        props: {
+            initialLanguage,
+        },
     };
 }
 

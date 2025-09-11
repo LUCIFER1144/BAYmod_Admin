@@ -10,6 +10,8 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Ensure this pat
 // CORRECTED: Directly import the Category model, not the getCategoryModel function
 import { mongooseConnect } from "@/lib/mongoose"; 
 import { Category } from "@/models/Category"; // <-- CRUCIAL CHANGE HERE
+import { useTranslation } from "@/lib/Translation";
+import { Setting } from "@/models/Setting";
 
 // --- getServerSideProps for server-side access control and data fetching ---
 // This function runs exclusively on the server-side for every request to this page.
@@ -30,7 +32,8 @@ export async function getServerSideProps(context) {
     
     // 2. Establish Mongoose connection BEFORE attempting to use models
     await mongooseConnect(); // Ensure Mongoose connection is established
-
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
     // CORRECTED: Use the directly imported 'Category' model. No need for getCategoryModel() anymore.
     const categories = await Category.find().populate('parent'); 
 
@@ -40,6 +43,7 @@ export async function getServerSideProps(context) {
             session: JSON.parse(JSON.stringify(session)), 
             // Pass the fetched categories data as props to the component.
             initialCategories: JSON.parse(JSON.stringify(categories)), 
+            initialLanguage,
         },
     };
 }
@@ -47,10 +51,10 @@ export async function getServerSideProps(context) {
 
 // --- Your existing Categories page component ---
 // The 'initialCategories' and 'session' props are now available directly from getServerSideProps
-function Categories({swal, session, initialCategories}) { // <-- Ensure 'session' is accepted here
+function Categories({swal, session, initialCategories, initialLanguage}) { // <-- Ensure 'session' is accepted here
     // Initialize categories state with data from getServerSideProps
     const [categories, setCategories] = useState(initialCategories || []); 
-
+    const {t} = useTranslation();
     const [editedCategory, setEditedCategory] = useState(null);
     const [name, setName] = useState('');
     const [parentCategory, setParentCategory] = useState(''); // Stores ID of parent
@@ -167,8 +171,8 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
     }
 
     return (
-        <Layout session={session}> {/* Pass session to Layout */}
-            <h1>Categories</h1>
+        <Layout session={session} initialLanguage={initialLanguage}> {/* Pass session to Layout */}
+            <h1>{t.Categories}</h1>
             <label htmlFor="categoryName" className="text-gray-600 text-sm">
                 {editedCategory 
                     ? `Edit category ${editedCategory.name}` 
@@ -179,14 +183,14 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                     <input 
                     id="categoryName"
                     type="text"
-                    placeholder={'Category name'} 
+                    placeholder={t.CategoryName} 
                     onChange={ev => setName(ev.target.value)}
                     value={name} 
                     />
                     <select 
                         onChange={ev => setParentCategory(ev.target.value)}
                         value={parentCategory}>
-                        <option value="">No parent category</option>
+                        <option value="">{t.NoParentCategory}</option>
                         {categories.length > 0 && categories.map(category => (
                             <option key={category._id} value={category._id}>
                                 {category.name}
@@ -196,9 +200,9 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                 </div>
 
                 <div className="mb-2">
-                    <label className="block">Properties</label>
+                    <label className="block">{t.Properties}</label>
                     <button onClick={addProperty} type="button" 
-                    className="btn-default text-sm mb-2">Add new property</button>
+                    className="btn-default text-sm mb-2">{t.AddNewProperty}</button>
                     {properties.length > 0 && properties.map((property, index) => (
                         <div key={index} className="flex gap-1 mb-2"> 
                             <input type="text" 
@@ -215,7 +219,7 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                             <button onClick={() => removeProperty(index)}
                                 type="button"
                                 className="btn-red">
-                                Remove
+                                {t.Remove}
                             </button>
                         </div>
                     ))}
@@ -226,13 +230,13 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                     <button onClick={cancelEdit} 
                         type="button"
                         className="btn-red">
-                        Cancel
+                        {t.Cancel}
                     </button>
                 )}
                 <button 
                     type="submit" 
                     className="btn-primary py-1 px-4 whitespace-nowrap">
-                    Save
+                    {t.Save}
                 </button>
                 </div>
             </form>
@@ -241,15 +245,15 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                 <table className="basic mt-4"> 
                     <thead>
                         <tr>
-                            <td className="font-bold">Category name</td> 
-                            <td className="font-bold">Parent category</td> 
+                            <td className="font-bold">{t.CategoryName}</td> 
+                            <td className="font-bold">{t.ParentCategory}</td> 
                             <td></td>
                         </tr>
                     </thead>
                     <tbody>
                         {categories.length === 0 ? (
                             <tr>
-                                <td colSpan="3" className="text-center py-4 text-gray-500">No categories found.</td>
+                                <td colSpan="3" className="text-center py-4 text-gray-500">{t.NoCategoriesFound}</td>
                             </tr>
                         ) : (
                             categories.map(category => (
@@ -264,12 +268,12 @@ function Categories({swal, session, initialCategories}) { // <-- Ensure 'session
                                         <button 
                                             onClick={() => editCategory(category)} 
                                             className="btn-default py-1 px-2 text-sm">
-                                            Edit
+                                            {t.Edit}
                                         </button>
                                         <button
                                             onClick={() => deleteCategory(category)} 
                                             className="btn-red py-1 px-2 text-sm">
-                                            Delete
+                                            {t.Delete}
                                         </button>
                                     </td>
                                 </tr>

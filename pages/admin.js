@@ -4,12 +4,54 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Spinner from "@/components/Spinner";
+import { Setting } from "@/models/Setting";
+import { useTranslation } from "@/lib/Translation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./api/auth/[...nextauth]";
+import { mongooseConnect } from "@/lib/mongoose"; 
 
-export default function AdminPage() {
+export async function getServerSideProps(context) {
+    const session = await getServerSession(context.req, context.res, authOptions);
+
+    if (!session) {
+        return {
+            redirect: {
+                destination: '/api/auth/signin',
+                permanent: false,
+            },
+        };
+    }
+
+    if (!session.user.isAdmin) {
+        return {
+            redirect: {
+                destination: '/access-denied',
+                permanent: false,
+            },
+        };
+    }
+
+    await mongooseConnect();
+    
+    // Fetch the user's language setting
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
+    return {
+        props: {
+            session: JSON.parse(JSON.stringify(session)),
+            initialLanguage, // Pass the fetched language to the component
+            
+        },
+    };
+}
+export default function AdminPage({initialLanguage}) {
     const { data: session, status } = useSession();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const {t} = useTranslation();
+    
+
 
     useEffect(() => {
         if (status === 'loading') return;
@@ -75,7 +117,7 @@ export default function AdminPage() {
 
     if (status === 'loading' || loading) {
         return (
-            <Layout>
+            <Layout initialLanguage={initialLanguage}>
                 <div className="flex justify-center items-center min-h-screen">
                     <Spinner />
                 </div>
@@ -85,7 +127,7 @@ export default function AdminPage() {
 
     if (!session || !session.user.isAdmin) {
         return (
-            <Layout>
+            <Layout initialLanguage={initialLanguage}>
                 <div className="text-center text-red-500 mt-8">
                     {error || "Access Denied: You must be an administrator to view this page."}
                 </div>
@@ -94,8 +136,8 @@ export default function AdminPage() {
     }
 
     return (
-        <Layout>
-            <h1>Manage Admin Accounts</h1>
+        <Layout initialLanguage={initialLanguage}>
+            <h1>{t.ManageAdminAccounts}</h1>
 
             {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -106,16 +148,16 @@ export default function AdminPage() {
             <table className="basic mt-4">
                 <thead>
                     <tr>
-                        <td>Name</td>
-                        <td>Email</td>
-                        <td>Admin Status</td>
-                        <td>Actions</td>
+                        <td>{t.Name}</td>
+                        <td>{t.Email}</td>
+                        <td>{t.AdminStatus}</td>
+                        <td>{t.Actions}</td>
                     </tr>
                 </thead>
                 <tbody>
                     {users.length === 0 ? (
                         <tr>
-                            <td colSpan="4" className="text-center py-4 text-gray-500">No users found.</td>
+                            <td colSpan="4" className="text-center py-4 text-gray-500">{t.NoUsersFound}</td>
                         </tr>
                     ) : (
                         users.map(user => (
@@ -137,7 +179,7 @@ export default function AdminPage() {
                                             {user.isAdmin ? 'Revoke Admin' : 'Make Admin'}
                                         </button>
                                     ) : (
-                                        <span className="text-gray-500 text-sm py-1 px-2">Cannot change self status</span>
+                                        <span className="text-gray-500 text-sm py-1 px-2">{t.CannotChangeSelfStatus}</span>
                                     )}
                                     
                                     {/* Delete User button */}
@@ -146,7 +188,7 @@ export default function AdminPage() {
                                             onClick={() => deleteUser(user._id, user.email)}
                                             className="btn-red px-2 py-1 text-sm"
                                         >
-                                            Delete
+                                            {t.Delete}
                                         </button>
                                     )}
                                 </td>

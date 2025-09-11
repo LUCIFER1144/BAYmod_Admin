@@ -13,6 +13,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Ensure this path is correct
 import { mongooseConnect } from "@/lib/mongoose"; // Ensure this path is correct for your Mongoose connection
 import { Product } from "@/models/Product"; // Ensure this path is correct for your Product model
+import { Setting } from "@/models/Setting";
+import { useTranslation } from "@/lib/Translation";
 
 // --- getServerSideProps for server-side access control and data fetching ---
 // This function runs exclusively on the server-side for every request to this page.
@@ -37,7 +39,8 @@ export async function getServerSideProps(context) {
     // 3. Fetch the product data from the database (only if user is an admin)
     await mongooseConnect(); // Ensure Mongoose connection is established
     const product = await Product.findById(id); // Fetch the product using its ID
-
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
     // If the product with the given ID is not found, you might want to redirect or show a 404 page.
     if (!product) {
         return {
@@ -56,6 +59,7 @@ export async function getServerSideProps(context) {
             // Mongoose documents need to be serialized (converted to plain JavaScript objects/JSON strings)
             // before being passed as props from getServerSideProps.
             product: JSON.parse(JSON.stringify(product)), 
+            initialLanguage,
         },
     };
 }
@@ -64,27 +68,27 @@ export async function getServerSideProps(context) {
 
 // --- Your Edit Product Page component ---
 // The 'product' prop is now available directly from getServerSideProps
-export default function EditProductPage({ product }) {
+export default function EditProductPage({ product, initialLanguage }) {
     // The product data is guaranteed to be available here because getServerSideProps
     // already handled the loading, admin check, and product existence.
-
+    const {t} = useTranslation();
     // If for some reason 'product' is null here (e.g., if you changed getServerSideProps logic),
     // you could add a fallback UI, though 'notFound: true' from getServerSideProps is preferred.
     if (!product) {
         return (
-            <Layout>
+            <Layout initialLanguage={initialLanguage}>
                 <div className="flex justify-center items-center min-h-screen">
                     {/* A simple message or a custom spinner/loader */}
                     <Spinner /> 
-                    <p className="ml-2 text-gray-700">Loading product...</p> 
+                    <p className="ml-2 text-gray-700">{t.LoadingProduct}</p> 
                 </div>
             </Layout>
         );
     }
 
     return (
-        <Layout>
-            <h1>Edit Product</h1>
+        <Layout initialLanguage={initialLanguage}>
+            <h1>{t.EditProduct}</h1>
             {/* Pass all properties of the fetched product to the ProductForm component */}
             <ProductForm {...product} /> 
         </Layout>

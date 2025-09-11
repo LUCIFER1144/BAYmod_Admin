@@ -11,6 +11,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Ensure this path is correct
 import { mongooseConnect } from "@/lib/mongoose"; // Ensure this path is correct for your Mongoose connection
 import { Product } from "@/models/Product"; // Ensure this path is correct for your Product model
+import { useTranslation } from "@/lib/Translation";
+import { Setting } from "@/models/Setting";
 
 // --- getServerSideProps for server-side access control and data fetching ---
 // This function runs exclusively on the server-side for every request to this page.
@@ -35,7 +37,8 @@ export async function getServerSideProps(context) {
     // 3. Fetch the product data from the database (only if user is an admin)
     await mongooseConnect(); // Ensure Mongoose connection is established
     const product = await Product.findById(id); // Fetch the product using its ID
-
+    const languageSetting = await Setting.findOne({ userId: session.user.id, name: 'language' });
+    const initialLanguage = languageSetting?.value || 'en';
     // If the product with the given ID is not found, you might want to redirect or show a 404 page.
     if (!product) {
         return {
@@ -52,7 +55,8 @@ export async function getServerSideProps(context) {
         props: {
             // Pass the product's title and ID as props to the component for the confirmation message.
             // Mongoose documents need to be serialized.
-            productTitle: product.title, 
+            productTitle: product.title,
+            initialLanguage, 
             productId: JSON.parse(JSON.stringify(product._id)), // Ensure ID is a plain string
         },
     };
@@ -61,8 +65,9 @@ export async function getServerSideProps(context) {
 
 // --- Your Delete Product Page component ---
 // The 'productTitle' and 'productId' props are now available directly from getServerSideProps
-export default function DeleteProductPage({ productTitle, productId }) {
+export default function DeleteProductPage({ productTitle, productId ,initialLanguage }) {
     const router = useRouter();
+    const {t} = useTranslation();
 
     // Function to navigate back to the products list
     function goBack() {
@@ -78,17 +83,17 @@ export default function DeleteProductPage({ productTitle, productId }) {
 
     return (
         <Layout>
-            <h1 className="text-center">Do you really want to delete
+            <h1 className="text-center">{t.ConfirmDeletion}
                 &nbsp;&quot;{productTitle}&quot;?
             </h1>
             <div className="flex gap-2 justify-center">
                 <button
                     onClick={deleteProduct}
-                    className="btn-red">Yes</button>
+                    className="btn-red">{t.Yes}</button>
                 <button
                     className="btn-default"
                     onClick={goBack}>
-                    No
+                    {t.No}
                 </button>
             </div>
         </Layout>
